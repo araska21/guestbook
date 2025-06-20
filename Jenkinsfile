@@ -74,8 +74,12 @@ pipeline {
             agent { label 'agent2' }
             steps {
                 script {
-                    //oDockImage = docker.build(strDockerImage)
-                    oDockImage = docker.build(strDockerImage, "--build-arg VERSION=${strDockerTag} -f Dockerfile .")
+                    sh """
+                        /usr/bin/docker build \
+                            --build-arg VERSION=${strDockerTag} \
+                            -t ${strDockerImage} \
+                            -f Dockerfile .
+                    """
                 }
             }
         }
@@ -83,8 +87,11 @@ pipeline {
             agent { label 'agent2' }
             steps {
                 script {
-                    docker.withRegistry('', 'DockerHub_Credential') {
-                        oDockImage.push()
+                    withCredentials([usernamePassword(credentialsId: 'DockerHub_Credential', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            echo "$DOCKER_PASS" | /usr/bin/docker login -u "$DOCKER_USER" --password-stdin
+                            /usr/bin/docker push ${strDockerImage}
+                        """
                     }
                 }
             }
