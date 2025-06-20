@@ -70,16 +70,14 @@ pipeline {
                 */
             }
         }
-        stage('Docker Image Build') {
+         stage('Docker Image Build') {
             agent { label 'agent2' }
             steps {
+                git branch: 'master', url:'https://github.com/araska21/guestbook.git'
+                sh './mvnw clean package'
                 script {
-                    sh """
-                        /usr/bin/docker build \
-                            --build-arg VERSION=${strDockerTag} \
-                            -t ${strDockerImage} \
-                            -f Dockerfile .
-                    """
+                    //oDockImage = docker.build(strDockerImage)
+                    oDockImage = docker.build(strDockerImage, "--build-arg VERSION=${strDockerTag} -f Dockerfile .")
                 }
             }
         }
@@ -87,11 +85,8 @@ pipeline {
             agent { label 'agent2' }
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'DockerHub_Credential', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh """
-                            echo "$DOCKER_PASS" | /usr/bin/docker login -u "$DOCKER_USER" --password-stdin
-                            /usr/bin/docker push ${strDockerImage}
-                        """
+                    docker.withRegistry('', 'DockerHub_Credential') {
+                        oDockImage.push()
                     }
                 }
             }
