@@ -110,7 +110,7 @@ pipeline {
             }
         }
         stage('Wait for Server Ready') {
-            agent { label 'agent2' }  // JMeter 실행할 노드
+            agent { label 'agent1' }  // JMeter 실행할 노드
             steps {
               script {
                 def retries = 20
