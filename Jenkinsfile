@@ -109,6 +109,27 @@ pipeline {
                 }
             }
         }
+        stage('Wait for Server Ready') {
+            agent { label 'agent2' }  // JMeter 실행할 노드
+            steps {
+              script {
+                def retries = 20
+                def waitSeconds = 3
+                for (int i = 0; i < retries; i++) {
+                 def status = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://13.209.13.27:38080/", returnStdout: true).trim()
+                 echo "[$i] Server HTTP status: ${status}"
+                 if (status == '200') {
+                  echo "✅ 서버가 준비되었습니다. 테스트를 시작합니다."
+                  break
+                 }
+                 if (i == retries - 1) {
+                  error("❌ 서버가 지정 시간 내에 준비되지 않았습니다.")
+                 }
+                 sleep(waitSeconds)
+               }
+             }
+           }
+        }
         stage ('JMeter LoadTest') {
            agent { label 'agent1' }
            steps { 
